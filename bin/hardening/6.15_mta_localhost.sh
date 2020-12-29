@@ -17,7 +17,7 @@ HARDENING_EXCEPTION=mail
 # This function will be called if the script status is on enabled / audit mode
 audit () {
     info "Checking netport ports opened"
-    RESULT=$($SUDO_CMD netstat -an | grep LIST | grep ":25[[:space:]]") || :
+    RESULT=$($SUDO_CMD $NET_CMD -an | grep LIST | grep ":25[[:space:]]") || :
     RESULT=${RESULT:-}
     debug "Result is $RESULT"
     if [ -z "$RESULT" ]; then
@@ -35,7 +35,7 @@ audit () {
 # This function will be called if the script status is on enabled mode
 apply () {
     info "Checking netport ports opened"
-    RESULT=$(netstat -an | grep LIST | grep ":25[[:space:]]") || :
+    RESULT=$($NET_CMD -an | grep LIST | grep ":25[[:space:]]") || :
     RESULT=${RESULT:-}
     debug "Result is $RESULT"
     if [ -z "$RESULT" ]; then

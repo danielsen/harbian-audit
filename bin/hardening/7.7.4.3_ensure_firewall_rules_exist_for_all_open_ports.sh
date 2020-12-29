@@ -25,7 +25,7 @@ audit () {
 	# For ipv4 
 	rm -f $NETLISTENLIST
 	rm -f $PROTO_PORT
-	netstat -ln | egrep -w '^tcp|^udp' > $NETLISTENLIST
+	$NET_CMD -ln | egrep -w '^tcp|^udp' > $NETLISTENLIST
 	cat $NETLISTENLIST | while read LISTENING
 	do
 		PROTO_TYPE=$(echo ${LISTENING} | awk '{print $1}')

@@ -29,7 +29,7 @@ audit () {
 	IPV6_ENABLE=$FNRET
 	# For ipv6
 	if [ $IPV6_ENABLE -eq 0 ]; then
-		netstat -ln | egrep -w '^tcp6|^udp6' > $NETLISTENLIST
+		$NET_CMD -ln | egrep -w '^tcp6|^udp6' > $NETLISTENLIST
 		cat $NETLISTENLIST | while read LISTENING
 		do
 			PROTO_TYPE=$(echo ${LISTENING} | awk '{print $1}')

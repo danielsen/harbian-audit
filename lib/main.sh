@@ -6,6 +6,15 @@ NONEXISTENT_NUMBER=0 #This will be used to see if service is exist
 status=""
 forcedstatus=""
 SUDO_CMD=""
+NET_CMD=""
+
+# `ss` replaces `netstat` in newer distros. Use it if available, otherwise use `netstat`
+if command -v ss &> /dev/null
+then
+    NET_CMD="ss"
+else
+    NET_CMD="netstat"
+fi
 
 [ -r $CIS_ROOT_DIR/lib/constants.sh  ] && . $CIS_ROOT_DIR/lib/constants.sh
 [ -r $CIS_ROOT_DIR/etc/hardening.cfg ] && . $CIS_ROOT_DIR/etc/hardening.cfg
