@@ -1,7 +1,7 @@
 # CIS Debian 7 Hardening Utility functions
 
 #
-# debian version check 
+# debian version check
 #
 
 is_centos_8()
@@ -86,7 +86,7 @@ is_debian_10()
 
 is_64bit_arch()
 {
-	if $(uname -m | grep -q "64"); then 
+	if $(uname -m | grep -q "64"); then
 		FNRET=0
 		debug "This machine architecture is 64 bit."
 	else
@@ -96,7 +96,7 @@ is_64bit_arch()
 }
 
 #
-# Sysctl 
+# Sysctl
 #
 
 has_sysctl_param_expected_result() {
@@ -141,7 +141,7 @@ set_sysctl_param() {
 }
 
 #
-# Dmesg 
+# Dmesg
 #
 
 does_pattern_exist_in_dmesg() {
@@ -154,7 +154,7 @@ does_pattern_exist_in_dmesg() {
 }
 
 #
-# File 
+# File
 #
 
 does_file_exist() {
@@ -188,10 +188,10 @@ has_file_correct_permissions() {
         	FNRET=0
     	else
         	FNRET=1
-    	fi 
+    	fi
 	else
         FNRET=1
-		info "$FILE is not exist!" 
+		info "$FILE is not exist!"
 	fi
 }
 
@@ -240,7 +240,7 @@ add_end_of_file() {
     backup_file "$FILE"
     echo "$LINE" >> $FILE
 }
-    
+
 add_line_file_before_pattern() {
     local FILE=$1
     local LINE=$2
@@ -429,16 +429,18 @@ is_kernel_option_enabled() {
             if grep -qRE "^\s*blacklist\s+$MODULE_NAME\s*$" /etc/modprobe.d/ ; then
                 debug "... but it's blacklisted!"
                 FNRET=1 # Not found (found but blacklisted)
-                # FIXME: even if blacklisted, it might be present in the initrd and
-                # be insmod from there... but painful to check :/ maybe lsmod would be enough ?
             fi
-            FNRET=0 # Found!
+			if ! lsmod | grep $MODULE_NAME ; then
+				FNRET=1
+			else
+            	FNRET=0 # Found!
+			fi
         fi
     fi
 }
 
 #
-# Mounting point 
+# Mounting point
 #
 
 # Verify $1 is a partition declared in fstab
@@ -533,10 +535,10 @@ add_option_to_fstab() {
        	sed -i "${CURLINE}s/$MOUNT_OPTION/$NEWOP/" /etc/fstab
 	#This case is for option of starting with "no", example: nosuid noexec nodev
     elif [ $(echo $MOUNT_OPTION | grep -cw ${NOTNOOPTION}) -gt 0 ]; then
-	    sed -i "${CURLINE}s/${NOTNOOPTION}/${OPTION}/" /etc/fstab 
+	    sed -i "${CURLINE}s/${NOTNOOPTION}/${OPTION}/" /etc/fstab
     elif [ $(echo $MOUNT_OPTION | grep -cw $OPTION) -eq 0 ]; then
 	    sed -i "${CURLINE}s/${MOUNT_OPTION}/${MOUNT_OPTION},${OPTION}/" /etc/fstab
-    fi    
+    fi
 }
 
 remount_partition() {
@@ -559,7 +561,7 @@ add_option_to_systemd() {
 		# For debian
     	systemctl stop $SERVICENAME
 	fi
-    # For example : 
+    # For example :
     # Options=mode=1777,strictatime,nosuid
     # Options=mode=1777,strictatime,nosuid,nodev
     #debug "Sed command : sed -ie "s;\(^Options.*=mode=[1,2,4,7][1,2,4,7][1,2,4,7][1,2,4,7].*\);\1,$OPTION;\" $SERVICEPATH"
@@ -581,10 +583,10 @@ remount_partition_by_systemd() {
 }
 
 #
-# APT 
+# APT
 #
 
-apt_update_if_needed() 
+apt_update_if_needed()
 {
     if [ -e /var/cache/apt/pkgcache.bin ]
     then
@@ -604,7 +606,7 @@ apt_check_updates()
 {
     local NAME="$1"
     local DETAILS="/dev/shm/${NAME}"
-    $SUDO_CMD apt-get upgrade -s 2>/dev/null | grep -E "^Inst" > $DETAILS || : 
+    $SUDO_CMD apt-get upgrade -s 2>/dev/null | grep -E "^Inst" > $DETAILS || :
     local COUNT=$(wc -l < "$DETAILS")
     FNRET=128 # Unknown function return result
     RESULT="" # Result output for upgrade
@@ -618,14 +620,14 @@ apt_check_updates()
     rm $DETAILS
 }
 
-apt_install() 
+apt_install()
 {
     local PACKAGE=$1
     DEBIAN_FRONTEND='noninteractive' apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install $PACKAGE -y
     FNRET=0
 }
 
-yum_install() 
+yum_install()
 {
     local PACKAGE=$1
     yum install -y $PACKAGE
@@ -677,7 +679,7 @@ verify_integrity_all_packages()
 {
 	if [ $OS_RELEASE -eq 2 ]; then
 		rpm -Va > /dev/shm/yum_verify_ret
-		COUNT=$(cat /dev/shm/yum_verify_ret | wc -l ) 
+		COUNT=$(cat /dev/shm/yum_verify_ret | wc -l )
     		if [ $COUNT -gt 0 ]; then
 			debug "Verify integrity all packages is fail"
 			cat /dev/shm/yum_verify_ret
@@ -700,11 +702,11 @@ verify_integrity_all_packages()
 	fi
 }
 
-# Check paramer with value 
+# Check paramer with value
 # example : minlen = 9
-# ruturn: 0  1  2  3 
+# ruturn: 0  1  2  3
 check_param_pair_by_value ()
-{   
+{
 	FILENAME=$1
 	OPTION=$2
 	COMPARE=$3
@@ -721,7 +723,7 @@ check_param_pair_by_value ()
 		if [ $COUNT -eq 1 ]; then
 	        debug "$OPTION is conf"
 			RESULT=$(sed -e '/^#/d' -e '/^[ \t][ \t]*#/d' -e 's/#.*$//' -e '/^$/d' $FILENAME | grep "^$OPTION[[:space:]]=[[:space:]]")
-			if [ "$(echo $RESULT | awk -F'= ' '{print $2}')" "-$COMPARE" "$OP_VALUE" ]; then 
+			if [ "$(echo $RESULT | awk -F'= ' '{print $2}')" "-$COMPARE" "$OP_VALUE" ]; then
 				debug "$OPTION conf is right."
 				FNRET=0
 			else
@@ -734,12 +736,12 @@ check_param_pair_by_value ()
         fi
     else
         debug "$FILENAME is not exist"
-        FNRET=3   
+        FNRET=3
     fi
 }
 
 check_param_pair_by_pam()
-{   
+{
     LOCATION=$1
     KEYWORD=$2
     OPTION=$3
@@ -767,21 +769,21 @@ check_param_pair_by_pam()
             else
                 debug "$cndt_value -$COMPARE  $CONDITION is not ok"
                 FNRET=5
-            fi 
-            
+            fi
+
         else
             debug "$KEYWORD $OPTION is not conf"
             FNRET=4
         fi
     else
         debug "$LOCATION is not exist"
-        FNRET=3   
+        FNRET=3
     fi
 }
 
-# Only check option name 
+# Only check option name
 check_no_param_option_by_pam()
-{   
+{
     KEYWORD=$1
     OPTION=$2
     LOCATION=$3
@@ -790,7 +792,7 @@ check_no_param_option_by_pam()
     #KEYWORD="pam_unix.so"
     #OPTION="sha512"
     #LOCATION="/etc/pam.d/common-password"
-    
+
     if [ -f "$LOCATION" ];then
         RESULT=$(sed -e '/^#/d' -e '/^[ \t][ \t]*#/d' -e 's/#.*$//' -e '/^$/d' $LOCATION | grep "$KEYWORD.*$OPTION" | wc -l)
         if [ "$RESULT" -eq 1 ]; then
@@ -802,12 +804,12 @@ check_no_param_option_by_pam()
         fi
     else
         debug "$LOCATION is not exist"
-        FNRET=3   
+        FNRET=3
     fi
 }
 
-# Add password check option 
-add_option_to_password_check() 
+# Add password check option
+add_option_to_password_check()
 {
     #Example:
     #local PAMPWDFILE="/etc/pam.d/common-password"
@@ -818,14 +820,14 @@ add_option_to_password_check()
     local OPTIONSTR=$3
     debug "Setting $OPTIONSTR for $KEYWORD"
     backup_file "$PAMPWDFILE"
-    # For example : 
+    # For example :
     # password  requisite           pam_cracklib.so  minlen=8 difok=3
     # password  requisite           pam_cracklib.so  minlen=8 difok=3 retry=3
-    sed -i "s;\(^password.*$KEYWORD.*\);\1 $OPTIONSTR;" $PAMPWDFILE  
+    sed -i "s;\(^password.*$KEYWORD.*\);\1 $OPTIONSTR;" $PAMPWDFILE
 }
 
-# Add session check option 
-add_option_to_session_check() 
+# Add session check option
+add_option_to_session_check()
 {
     #Example:
     #local PAMPWDFILE="/etc/pam.d/login"
@@ -836,15 +838,15 @@ add_option_to_session_check()
     local OPTIONSTR=$3
     debug "Setting $OPTIONSTR for $KEYWORD"
     backup_file "$PAMPWDFILE"
-    # For example : 
+    # For example :
     # password  requisite           pam_cracklib.so  minlen=8 difok=3
     # password  requisite           pam_cracklib.so  minlen=8 difok=3 retry=3
-    sed -i "s;\(^session.*$KEYWORD.*\);\1 $OPTIONSTR;" $PAMPWDFILE  
+    sed -i "s;\(^session.*$KEYWORD.*\);\1 $OPTIONSTR;" $PAMPWDFILE
 }
 
 
-# Add auth check option 
-add_option_to_auth_check() 
+# Add auth check option
+add_option_to_auth_check()
 {
     #Example:
     #local PAMPWDFILE="/etc/pam.d/common-auth"
@@ -855,13 +857,13 @@ add_option_to_auth_check()
     local OPTIONSTR=$3
     debug "Setting $OPTIONSTR for $KEYWORD"
     backup_file "$PAMPWDFILE"
-    # For example : 
+    # For example :
     # password  requisite           pam_cracklib.so  minlen=8 difok=3
     # password  requisite           pam_cracklib.so  minlen=8 difok=3 retry=3
-    sed -i "s;\(^auth.*$KEYWORD.*\);\1 $OPTIONSTR;" $PAMPWDFILE  
+    sed -i "s;\(^auth.*$KEYWORD.*\);\1 $OPTIONSTR;" $PAMPWDFILE
 }
 
-# Reset password check option value when option is not set a correct value 
+# Reset password check option value when option is not set a correct value
 reset_option_to_password_check()
 {
     #Example:
@@ -875,14 +877,14 @@ reset_option_to_password_check()
     local OPTIONVAL=$4
     debug "Setting $OPTION for $KEYWORD reset option value to $OPTIONVAL"
     backup_file "$PAMPWDFILE"
-    # For example : 
+    # For example :
     # password  requisite           pam_cracklib.so  minlen=8 difok=3 retry=1
     # password  requisite           pam_cracklib.so  minlen=8 difok=3 retry=3
 	cndt_value=$(sed -e '/^#/d' -e '/^[ \t][ \t]*#/d' -e 's/#.*$//' -e '/^$/d' $PAMPWDFILE | grep "$KEYWORD.*$OPTIONNAME" | tr "\t" " " | tr " " "\n" | sed -n "/$OPTIONNAME/p" | awk -F "=" '{print $2}')
     sed -i "s/${OPTIONNAME}=${cndt_value}/${OPTIONNAME}=${OPTIONVAL}/" $PAMPWDFILE
 }
 
-# Reset auth check option value when option is not set a correct value 
+# Reset auth check option value when option is not set a correct value
 reset_option_to_auth_check()
 {
     #Example:
@@ -896,15 +898,15 @@ reset_option_to_auth_check()
     local OPTIONVAL=$4
     debug "Setting $OPTION for $KEYWORD reset option value to $OPTIONVAL"
     backup_file "$PAMPWDFILE"
-    # For example : 
+    # For example :
     # password  requisite           pam_cracklib.so  minlen=8 difok=3 retry=1
     # password  requisite           pam_cracklib.so  minlen=8 difok=3 retry=3
     sed -i "s/${OPTIONNAME}=.*/${OPTIONNAME}=${OPTIONVAL}/" $PAMPWDFILE
 }
 
-# Only check option name 
+# Only check option name
 check_auth_option_nullok_by_pam()
-{   
+{
     KEYWORD=$1
     OPTION1=$2
     OPTION2=$3
@@ -915,7 +917,7 @@ check_auth_option_nullok_by_pam()
     #KEYWORD="pam_unix.so"
     #OPTION1="nullok"
     #OPTION2="nullok_secure"
-    
+
     if [ -f "$LOCATION" ];then
         RESULT=$(sed -e '/^#/d' -e '/^[ \t][ \t]*#/d' -e 's/#.*$//' -e '/^$/d' $LOCATION | grep "$KEYWORD.*$OPTION2" | wc -l)
         if [ "$RESULT" -eq 1 ]; then
@@ -934,11 +936,11 @@ check_auth_option_nullok_by_pam()
         fi
     else
         debug "$LOCATION is not exist"
-        FNRET=3   
+        FNRET=3
     fi
 }
 
-# Ensure is set accept for INPUT of loopback traffic 
+# Ensure is set accept for INPUT of loopback traffic
 ensure_lo_traffic_input_is_accept()
 {
 	IPS4=$(which iptables)
@@ -952,7 +954,7 @@ ensure_lo_traffic_input_is_accept()
 		else
 			debug "Ip4tables: loopback traffic INPUT is not configured!"
 			FNRET=1
-		fi	
+		fi
 	else
 		if [ $(${IPS6} -S | grep -c "^\-A INPUT \-i lo \-j ACCEPT") -ge 1 -o $(${IPS6} -S | grep -c "^\-A INPUT \-i ::/0 \-j ACCEPT") -ge 1 ]; then
 			debug "Ip6tables loopback traffic INPUT has configured!"
@@ -995,7 +997,7 @@ ensure_lo_traffic_other_if_input_is_deny()
 {
 	IPS4=$(which iptables)
 	IPS6=$(which ip6tables)
-	
+
 	# all other interfaces to deny traffic to the loopback network.
 	version=$1
 	if [ $version == 'IPS4' ]; then
@@ -1017,13 +1019,13 @@ ensure_lo_traffic_other_if_input_is_deny()
 	fi
 }
 
-#Ensure is set accept for all outbound 
+#Ensure is set accept for all outbound
 check_outbound_connect_is_accept()
 {
 	PATTERN="\-\-state NEW,ESTABLISHED \-j ACCEPT"
 	IPS4=$(which iptables)
 	IPS6=$(which ip6tables)
-	# $1 maybe is: tcp udp icmp 
+	# $1 maybe is: tcp udp icmp
 	proto=$1
 	version=$2
 	if [ $version == 'IPS4' ]; then
@@ -1045,13 +1047,13 @@ check_outbound_connect_is_accept()
 	fi
 }
 
-#Ensure is set accept for input with ESTABLISHED  
+#Ensure is set accept for input with ESTABLISHED
 check_input_with_established_is_accept()
 {
 	PATTERN="\-\-state ESTABLISHED \-j ACCEPT"
 	IPS4=$(which iptables)
 	IPS6=$(which ip6tables)
-	# $1 maybe is: tcp udp icmp 
+	# $1 maybe is: tcp udp icmp
 	proto=$1
 	version=$2
 	if [ $version == 'IPS4' ]; then
@@ -1115,17 +1117,17 @@ check_auditd_is_immutable_mode()
 # 100: need update
 # 0: not need update
 # 1: error
-yum_check_updates() 
+yum_check_updates()
 {
 	FNRET=$($SUDO_CMD yum check-update > /dev/null; echo $?)
-	if [ $FNRET -eq 100 ]; then 
+	if [ $FNRET -eq 100 ]; then
 		# update too old, refresh database
 		$SUDO_CMD yum makecache >/dev/null 2>/dev/null
     fi
 }
 
-# Check path of audit rule is exist, return 0 if path string is not NULL, else return 1 
-# Example: 
+# Check path of audit rule is exist, return 0 if path string is not NULL, else return 1
+# Example:
 # Process only the following format:
 # AUDITRULE="-a always,exit -F path=/usr/bin/passwd -F perm=x -F auid>=1000 -F auid!=4294967295 -k privileged-passwd"
 # Please manually execute apt-file (Debian) / yum Provides (redhat) to ensure that the path already exists in the repository.
@@ -1145,8 +1147,8 @@ check_audit_path ()
 	fi
 }
 
-# For CentOS 8 
-# Reference: https://access.redhat.com/solutions/3906701 
+# For CentOS 8
+# Reference: https://access.redhat.com/solutions/3906701
 tcp_wrappers_warn ()
 {
 	warn "The package(tcp_wrappers) has been deprecated in RHEL 7 and therefore it will not be avaliable in RHEL 8 or later RHEL release."
@@ -1169,7 +1171,7 @@ check_aa_status ()
 {
 	APPARMOR_STATUS='/usr/sbin/aa-status'
 	if [ -f "$APPARMOR_STATUS" ]; then
-		$APPARMOR_STATUS  > /dev/null 2>&1 
+		$APPARMOR_STATUS  > /dev/null 2>&1
 		case $? in
 			0)	info "AppArmor is enabled and policy is loaded."
 				FNRET=0
@@ -1193,13 +1195,13 @@ check_aa_status ()
 	fi
 }
 
-# Check sshd access limit 
-# If not exist key of above, it's fail beacause default is everyone to allow 
+# Check sshd access limit
+# If not exist key of above, it's fail beacause default is everyone to allow
 # Example: $1='AllowUsers'  $2='AllowUsers[[:space:]]*\*'
 check_sshd_access_limit ()
 {
-	if [ $(sshd -T | grep -ic $1) -eq 1 ]; then 
-		if [ $(sshd -T | grep -ic $2) -eq 1 ]; then 
+	if [ $(sshd -T | grep -ic $1) -eq 1 ]; then
+		if [ $(sshd -T | grep -ic $2) -eq 1 ]; then
 			debug "$1 is not set limit!"
 			FNRET=2
 		else
@@ -1213,7 +1215,7 @@ check_sshd_access_limit ()
 }
 
 # Check sshd conf for one value  sshd -T return 'keyword value' pairs
-# If the value of keyword is equal $2, return 0 
+# If the value of keyword is equal $2, return 0
 # If the keywork does not exist in the sshd runtime configuration, return 1
 # If the value of keyword is not equal $2, return 2
 # Example: $1='PermitRootLogin'  $2='no'
@@ -1235,7 +1237,7 @@ check_sshd_conf_for_one_value_runtime ()
 	fi
 }
 
-# Check blacklist module set of /etc/modprobe.d/* 
+# Check blacklist module set of /etc/modprobe.d/*
 # If set, return 0; else return 1
 # Example: $1='nf_nat_sip'
 check_blacklist_module_set ()
@@ -1250,4 +1252,3 @@ check_blacklist_module_set ()
 		FNRET=1
 	fi
 }
-
